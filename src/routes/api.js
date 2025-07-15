@@ -171,4 +171,42 @@ router.get('/test/twitter-auth', async (req, res) => {
   }
 });
 
+// Privacy analysis endpoint
+router.post('/privacy/analyze', async (req, res) => {
+  try {
+    const { content } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content is required'
+      });
+    }
+
+    const { ContentProcessor } = require('../processors/ContentProcessor');
+    const processor = new ContentProcessor();
+    
+    const analysis = await processor.analyzePrivacyRisks(content);
+    
+    res.json({
+      success: true,
+      data: {
+        riskLevel: analysis.riskLevel,
+        issuesDetected: analysis.detectedIssues.length,
+        detectedIssues: analysis.detectedIssues,
+        suggestions: analysis.suggestions,
+        filteredContent: analysis.filteredContent
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Privacy analysis failed:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Privacy analysis failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal error'
+    });
+  }
+});
+
 module.exports = router;

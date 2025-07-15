@@ -2,6 +2,7 @@
 // This adds real AI content adaptation
 
 const logger = require('../utils/logger');
+const PrivacyFilter = require('../filters/PrivacyFilter');
 
 class ContentProcessor {
   constructor() {
@@ -10,6 +11,9 @@ class ContentProcessor {
     // Initialize OpenAI if available
     this.openai = null;
     this.initializeOpenAI();
+    
+    // Initialize Privacy Filter
+    this.privacyFilter = new PrivacyFilter();
   }
 
   async initializeOpenAI() {
@@ -35,17 +39,42 @@ class ContentProcessor {
     try {
       const category = options.category || 'ai_automation';
       
-      // Process each platform
+      // Step 1: Apply privacy filtering if enabled
+      const privacyResult = await this.privacyFilter.filterContent(content, options);
+      const filteredContent = privacyResult.filteredContent;
+      
+      // Log privacy analysis results
+      if (privacyResult.privacyFilterEnabled && privacyResult.privacyAnalysis) {
+        logger.info('Privacy filter applied', {
+          riskLevel: privacyResult.privacyAnalysis.riskLevel,
+          issuesDetected: privacyResult.privacyAnalysis.detectedIssues.length,
+          contentModified: filteredContent !== content
+        });
+      }
+      
+      // Step 2: Process each platform with filtered content
       for (const platform of platforms) {
         try {
+          let platformContent;
           if (this.openai) {
-            adaptedContent[platform] = await this.aiAdaptContent(content, platform, category);
+            platformContent = await this.aiAdaptContent(filteredContent, platform, category);
           } else {
-            adaptedContent[platform] = this.basicAdaptContent(content, platform);
+            platformContent = this.basicAdaptContent(filteredContent, platform);
           }
+          
+          // Add privacy information to adapted content
+          if (privacyResult.privacyFilterEnabled) {
+            platformContent.privacyInfo = {
+              riskLevel: privacyResult.privacyAnalysis?.riskLevel || 'unknown',
+              issuesDetected: privacyResult.privacyAnalysis?.detectedIssues.length || 0,
+              suggestions: privacyResult.privacyAnalysis?.suggestions || []
+            };
+          }
+          
+          adaptedContent[platform] = platformContent;
         } catch (error) {
           logger.error(`Failed to adapt content for ${platform}:`, error);
-          adaptedContent[platform] = this.basicAdaptContent(content, platform);
+          adaptedContent[platform] = this.basicAdaptContent(filteredContent, platform);
         }
       }
 
@@ -192,6 +221,16 @@ Return JSON format:
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(16).substring(0, 8);
+  }
+
+  // Method to analyze content for privacy risks without processing
+  async analyzePrivacyRisks(content) {
+    return await this.privacyFilter.analyzeContent(content);
+  }
+
+  // Method to get privacy suggestions
+  async getPrivacySuggestions(content) {
+    return await this.privacyFilter.getAnonymizationSuggestions(content);
   }
 }
 
