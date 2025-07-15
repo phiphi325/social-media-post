@@ -1,11 +1,13 @@
 
 const LinkedInPublisher = require('../publishers/LinkedInPublisher');
+const TwitterPublisher = require('../publishers/TwitterPublisher');
 const logger = require('../utils/logger');
 
 class SocialMediaController {
   constructor() {
     this.publishers = {
-      linkedin: new LinkedInPublisher()
+      linkedin: new LinkedInPublisher(),
+      twitter: new TwitterPublisher()
     };
     // Initialize ContentProcessor later to avoid circular dependencies
     this.contentProcessor = null;

@@ -1,0 +1,5 @@
+{
+  "content": "🐦 Twitter-only test! This post is specifically testing my social media automation system's Twitter integration. Features include AI content adaptation, automatic GitHub repo links, smart threading for long content, and platform-optimized hashtags. The system is working beautifully!",
+  "platforms": ["twitter"],
+  "category": "twitter_test"
+}

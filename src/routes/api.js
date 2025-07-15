@@ -25,8 +25,8 @@ router.post('/content/publish', async (req, res) => {
     if (platforms.includes('linkedin') && !process.env.LINKEDIN_ACCESS_TOKEN) {
       missingKeys.push('LINKEDIN_ACCESS_TOKEN');
     }
-    if ((platforms.includes('twitter') || platforms.includes('x')) && !process.env.TWITTER_API_KEY) {
-      missingKeys.push('TWITTER_API_KEY');
+    if ((platforms.includes('twitter') || platforms.includes('x')) && !process.env.TWITTER_ACCESS_TOKEN) {
+      missingKeys.push('TWITTER_ACCESS_TOKEN');
     }
 
     if (missingKeys.length > 0) {
@@ -138,6 +138,35 @@ router.get('/test/linkedin-auth', async (req, res) => {
       message: 'LinkedIn authentication failed',
       error: error.message,
       hint: 'Check your LINKEDIN_ACCESS_TOKEN in .env file'
+    });
+  }
+});
+
+// Test Twitter authentication
+router.get('/test/twitter-auth', async (req, res) => {
+  try {
+    const TwitterPublisher = require('../publishers/TwitterPublisher');
+    const publisher = new TwitterPublisher();
+    
+    const profile = await publisher.getUserProfile();
+    
+    res.json({
+      success: true,
+      message: 'Twitter authentication successful',
+      data: {
+        id: profile.profile?.id,
+        username: profile.profile?.username,
+        name: profile.profile?.name,
+        followers: profile.profile?.public_metrics?.followers_count || 0
+      }
+    });
+  } catch (error) {
+    logger.error('Twitter auth test failed:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Twitter authentication failed',
+      error: error.message,
+      hint: 'Check your TWITTER_ACCESS_TOKEN in .env file'
     });
   }
 });

@@ -131,6 +131,12 @@ class LinkedInPublisher {
       formattedContent += `\n\n${mentionString}`;
     }
     
+    // Add GitHub repo link if not already present
+    const repoUrl = 'https://github.com/phiphi325/social-media-post';
+    if (!formattedContent.includes(repoUrl)) {
+      formattedContent += `\n\n🔗 Check out the code: ${repoUrl}`;
+    }
+    
     // Ensure content doesn't exceed LinkedIn's character limit (3000 characters)
     if (formattedContent.length > 3000) {
       logger.warn('Content exceeds LinkedIn character limit, truncating...');
